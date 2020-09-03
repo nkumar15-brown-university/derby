@@ -24,20 +24,32 @@ class Experiment:
     def __init__(self):
         self.auction_item_specs = [
                         AuctionItemSpecification(name="male", item_type={"male"}),
-                        AuctionItemSpecification(name="female", item_type={"female"})
+                        AuctionItemSpecification(name="female", item_type={"female"}),
+                        AuctionItemSpecification(name="young", item_type={"young"}),
+                        AuctionItemSpecification(name="old", item_type={"old"}),
+                        AuctionItemSpecification(name="rich", item_type={"rich"}),
+                        AuctionItemSpecification(name="poor", item_type={"poor"}),
+                        AuctionItemSpecification(name="male young", item_type={"male", "young"}),
+                        AuctionItemSpecification(name="male old", item_type={"male", "old"}),
+                        AuctionItemSpecification(name="female young", item_type={"female", "young"}),
+                        AuctionItemSpecification(name="female old", item_type={"female", "old"}),
+                        AuctionItemSpecification(name="male rich", item_type={"male", "rich"}),
+                        AuctionItemSpecification(name="male poor", item_type={"male", "poor"}),
+                        AuctionItemSpecification(name="female rich", item_type={"female", "rich"}),
+                        AuctionItemSpecification(name="female poor", item_type={"female", "poor"})
         ]
         self.campaigns = [
                         Campaign(10, 100, self.auction_item_specs[0]),
-                        Campaign(10, 100, self.auction_item_specs[1])
+                        Campaign(10, 100, self.auction_item_specs[1]),
+                        Campaign(20, 200, self.auction_item_specs[0]),
+                        Campaign(20, 200, self.auction_item_specs[1]),
+                        Campaign(30, 250, self.auction_item_specs[0]),
+                        Campaign(30, 250, self.auction_item_specs[1]),
+                        Campaign(10, 200, self.auction_item_specs[2]),
+                        Campaign(10, 150, self.auction_item_specs[3]),
+                        Campaign(20, 400, self.auction_item_specs[2]),
+                        Campaign(20, 300, self.auction_item_specs[3]),
         ]
-        self.auction_item_spec_pmf = PMF({
-                    self.auction_item_specs[0] : 1,
-                    self.auction_item_specs[1] : 1
-        })
-        self.campaign_pmf = PMF({
-                    self.campaigns[0] : 1,
-                    self.campaigns[1] : 1
-        })
         self.first_price_auction = KthPriceAuction(1)
         self.second_price_auction = KthPriceAuction(2)
 
@@ -47,12 +59,10 @@ class Experiment:
         auction = self.first_price_auction
         campaigns = self.campaigns
         auction_item_spec_pmf = PMF({
-                    self.auction_item_specs[0] : 0,
                     self.auction_item_specs[1] : 1
         })
-        auction_item_spec_ids = [self.auction_item_specs[1].uid]
+        auction_item_spec_ids = [spec.uid for spec in auction_item_spec_pmf.items()]
         campaign_pmf = PMF({
-                    self.campaigns[0] : 0,
                     self.campaigns[1] : 1
         })
         if debug:
@@ -75,7 +85,7 @@ class Experiment:
                     self.auction_item_specs[0] : 1,
                     self.auction_item_specs[1] : 1
         })
-        auction_item_spec_ids = [spec.uid for spec in self.auction_item_specs]
+        auction_item_spec_ids = [spec.uid for spec in auction_item_spec_pmf.items()]
         campaign_pmf = PMF({
                     self.campaigns[0] : 1,
                     self.campaigns[1] : 1
@@ -87,6 +97,114 @@ class Experiment:
 
         num_items_per_timestep_min = 1
         num_items_per_timestep_max = 2
+        env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
+                                  num_items_per_timestep_min, num_items_per_timestep_max)
+        return env, auction_item_spec_ids
+
+
+    def setup_3(self, debug=False):
+        auction_item_specs = self.auction_item_specs
+        auction = self.first_price_auction
+        campaigns = self.campaigns
+        auction_item_spec_pmf = PMF({
+                    self.auction_item_specs[0] : 1,
+                    self.auction_item_specs[1] : 1
+        })
+        auction_item_spec_ids = [spec.uid for spec in auction_item_spec_pmf.items()]
+        campaign_pmf = PMF({
+                    self.campaigns[0] : 1,
+                    self.campaigns[1] : 1
+        })
+        if debug:
+            for c in campaigns:
+                pprint(c)
+                print()
+
+        num_items_per_timestep_min = 1
+        num_items_per_timestep_max = 4
+        env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
+                                  num_items_per_timestep_min, num_items_per_timestep_max)
+        return env, auction_item_spec_ids
+
+
+    def setup_4(self, debug=False):
+        auction_item_specs = self.auction_item_specs
+        auction = self.first_price_auction
+        campaigns = self.campaigns
+        auction_item_spec_pmf = PMF({
+                    self.auction_item_specs[0] : 1,
+                    self.auction_item_specs[1] : 1
+        })
+        auction_item_spec_ids = [spec.uid for spec in auction_item_spec_pmf.items()]
+        campaign_pmf = PMF({
+                    self.campaigns[0] : 1,
+                    self.campaigns[1] : 1
+        })
+        if debug:
+            for c in campaigns:
+                pprint(c)
+                print()
+
+        num_items_per_timestep_min = 10
+        num_items_per_timestep_max = 21
+        env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
+                                  num_items_per_timestep_min, num_items_per_timestep_max)
+        return env, auction_item_spec_ids
+
+
+    def setup_5(self, debug=False):
+        auction_item_specs = self.auction_item_specs
+        auction = self.first_price_auction
+        campaigns = self.campaigns
+        auction_item_spec_pmf = PMF({
+                    self.auction_item_specs[0] : 1,
+                    self.auction_item_specs[1] : 1,
+                    self.auction_item_specs[2] : 1,
+                    self.auction_item_specs[3] : 1
+        })
+        auction_item_spec_ids = [spec.uid for spec in auction_item_spec_pmf.items()]
+        campaign_pmf = PMF({
+                    self.campaigns[0] : 1,
+                    self.campaigns[1] : 1,
+                    self.campaigns[6] : 1,
+                    self.campaigns[7] : 1
+        })
+        if debug:
+            for c in campaigns:
+                pprint(c)
+                print()
+
+        num_items_per_timestep_min = 4
+        num_items_per_timestep_max = 9
+        env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
+                                  num_items_per_timestep_min, num_items_per_timestep_max)
+        return env, auction_item_spec_ids
+
+
+    def setup_6(self, debug=False):
+        auction_item_specs = self.auction_item_specs
+        auction = self.first_price_auction
+        campaigns = self.campaigns
+        auction_item_spec_pmf = PMF({
+                    self.auction_item_specs[0] : 1,
+                    self.auction_item_specs[1] : 1,
+        })
+        auction_item_spec_ids = [spec.uid for spec in auction_item_spec_pmf.items()]
+        campaign_pmf = PMF({
+                    self.campaigns[0] : 3,
+                    self.campaigns[1] : 3,
+                    self.campaigns[2] : 2,
+                    self.campaigns[3] : 2,
+                    self.campaigns[4] : 1,
+                    self.campaigns[5] : 1,
+        })
+        if debug:
+            for c in campaigns:
+                pprint(c)
+                print()
+
+        num_items_per_timestep_min = 1
+        num_items_per_timestep_max = 3
         env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
                                   num_items_per_timestep_min, num_items_per_timestep_max)
         return env, auction_item_spec_ids
@@ -3914,6 +4032,214 @@ class Experiment:
         return None, None, None
 
 
+    def exp_4100(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_3()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_4101(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_3()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_4200(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_4()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_4201(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_4()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_4300(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_5()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_4301(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_5()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_4400(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_6()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_4401(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_6()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidPolicy(5, 5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
 if __name__ == '__main__':
     exp = sys.argv[1]
     num_days = int(sys.argv[2])
@@ -4038,6 +4364,14 @@ if __name__ == '__main__':
         'exp_4002': experiment.exp_4002, # REINFORCE_Baseline_Gaussian_v3_1 (w/o rwd shaping) vs. FixedBidPolicy, env setup 2
         'exp_4003': experiment.exp_4003, # AC_TD_Gaussian_v3_1 (w/o rwd shaping) vs. FixedBidPolicy, env setup 2
         'exp_4004': experiment.exp_4004, # AC_SARSA_Baseline_V_Gaussian_v3_1 (w/o rwd shaping) vs. FixedBidPolicy, env setup 2
+        'exp_4100': experiment.exp_4100, # env setup 3, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidPolicy
+        'exp_4101': experiment.exp_4101, # env setup 3, REINFORCE_Baseline_Tabu_Gaussian_v3_1  vs. FixedBidPolicy
+        'exp_4200': experiment.exp_4200, # env setup 4, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidPolicy
+        'exp_4201': experiment.exp_4201, # env setup 4, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidPolicy
+        'exp_4300': experiment.exp_4300, # env setup 5, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidPolicy
+        'exp_4301': experiment.exp_4301, # env setup 5, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidPolicy
+        'exp_4400': experiment.exp_4400, # env setup 6, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidPolicy
+        'exp_4401': experiment.exp_4401, # env setup 6, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidPolicy
     }
     try:
         exp_func = function_mappings[exp]
