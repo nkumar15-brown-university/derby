@@ -66,14 +66,13 @@ class Experiment:
                     self.campaigns[1] : 1
         })
         if debug:
-            for c in campaigns:
-                pprint(c)
-                print()
+            print("campaigns: {}".format(campaign_pmf.items()))
 
         num_items_per_timestep_min = 1
         num_items_per_timestep_max = 2
         env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
                                   num_items_per_timestep_min, num_items_per_timestep_max)
+        print("setup: setup_1")
         return env, auction_item_spec_ids
 
 
@@ -91,14 +90,13 @@ class Experiment:
                     self.campaigns[1] : 1
         })
         if debug:
-            for c in campaigns:
-                pprint(c)
-                print()
+            print("campaigns: {}".format(campaign_pmf.items()))
 
         num_items_per_timestep_min = 1
         num_items_per_timestep_max = 2
         env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
                                   num_items_per_timestep_min, num_items_per_timestep_max)
+        print("setup: setup_2")
         return env, auction_item_spec_ids
 
 
@@ -116,14 +114,13 @@ class Experiment:
                     self.campaigns[1] : 1
         })
         if debug:
-            for c in campaigns:
-                pprint(c)
-                print()
+            print("campaigns: {}".format(campaign_pmf.items()))
 
         num_items_per_timestep_min = 1
         num_items_per_timestep_max = 4
         env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
                                   num_items_per_timestep_min, num_items_per_timestep_max)
+        print("setup: setup_3")
         return env, auction_item_spec_ids
 
 
@@ -141,14 +138,13 @@ class Experiment:
                     self.campaigns[1] : 1
         })
         if debug:
-            for c in campaigns:
-                pprint(c)
-                print()
+            print("campaigns: {}".format(campaign_pmf.items()))
 
         num_items_per_timestep_min = 10
         num_items_per_timestep_max = 21
         env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
                                   num_items_per_timestep_min, num_items_per_timestep_max)
+        print("setup: setup_4")
         return env, auction_item_spec_ids
 
 
@@ -170,14 +166,13 @@ class Experiment:
                     self.campaigns[7] : 1
         })
         if debug:
-            for c in campaigns:
-                pprint(c)
-                print()
+            print("campaigns: {}".format(campaign_pmf.items()))
 
         num_items_per_timestep_min = 4
         num_items_per_timestep_max = 9
         env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
                                   num_items_per_timestep_min, num_items_per_timestep_max)
+        print("setup: setup_5")
         return env, auction_item_spec_ids
 
 
@@ -199,14 +194,13 @@ class Experiment:
                     self.campaigns[5] : 1,
         })
         if debug:
-            for c in campaigns:
-                pprint(c)
-                print()
+            print("campaigns: {}".format(campaign_pmf.items()))
 
         num_items_per_timestep_min = 1
         num_items_per_timestep_max = 3
         env = OneCampaignNDaysEnv(auction, auction_item_spec_pmf, campaign_pmf,
                                   num_items_per_timestep_min, num_items_per_timestep_max)
+        print("setup: setup_6")
         return env, auction_item_spec_ids
 
 
@@ -4240,6 +4234,214 @@ class Experiment:
         return None, None, None
 
 
+    def exp_5100(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_3()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_5101(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_3()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_5200(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_4()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_5201(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_4()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_5300(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_5()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_5301(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_5()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_5400(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_6()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
+    def exp_5401(self, num_days, num_trajs, num_epochs, lr, debug=False):
+        # Get a pre-defined environment
+        env, auction_item_spec_ids = self.setup_6()
+        
+        # Get scaling/decaling info
+        scale_states_func, actions_scaler, \
+        scale_actions_func, descale_actions_func, scaled_avg_bpr = self.get_transformed(env)
+
+        # Setup the agents of the game
+        agents = [
+                    Agent("agent1", 
+                        REINFORCE_Baseline_Tabu_Gaussian_v3_1_MarketEnv_Continuous(
+                            auction_item_spec_ids, learning_rate=lr, 
+                            budget_per_reach=scaled_avg_bpr, shape_reward=False
+                        ),
+                        scale_states_func, scale_actions_func,
+                        descale_actions_func
+                    ),
+                    Agent("agent2", FixedBidAdaptiveLimitPolicy(5))
+        ]
+
+        # Run the game
+        self.run(env, agents, num_days, num_trajs, num_epochs, 100, vectorize=True, debug=debug)
+        return None, None, None
+
+
 if __name__ == '__main__':
     exp = sys.argv[1]
     num_days = int(sys.argv[2])
@@ -4300,7 +4502,7 @@ if __name__ == '__main__':
         'exp_119': experiment.exp_119, # AC_TD_Triangular vs. StepPolicy (decreasing)
         'exp_120': experiment.exp_120, # AC_Q_Triangular vs. StepPolicy (decreasing)
         'exp_121': experiment.exp_121, # AC_SARSA_Triangular vs. StepPolicy (decreasing)
-        'exp_400': experiment.exp_400, # REINFORCE_v2_Gaussian (w/o rwd shaping) vs. FixedBidPolicy, env setup 2
+        'exp_400': experiment.exp_400, # env setup 2, REINFORCE_v2_Gaussian (w/o rwd shaping) vs. FixedBidPolicy
         'exp_1000': experiment.exp_1000, # REINFORCE_v2_Gaussian (w/o rwd shaping) vs. FixedBidPolicy
         'exp_1001': experiment.exp_1001, # REINFORCE_v2_Gaussian (w/ rwd shaping) vs. FixedBidPolicy
         'exp_1002': experiment.exp_1002, # REINFORCE_v3_Gaussian (w/o rwd shaping) vs. FixedBidPolicy
@@ -4372,6 +4574,14 @@ if __name__ == '__main__':
         'exp_4301': experiment.exp_4301, # env setup 5, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidPolicy
         'exp_4400': experiment.exp_4400, # env setup 6, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidPolicy
         'exp_4401': experiment.exp_4401, # env setup 6, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidPolicy
+        'exp_5100': experiment.exp_5100, # env setup 3, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidAdaptiveLimitPolicy
+        'exp_5101': experiment.exp_5101, # env setup 3, REINFORCE_Baseline_Tabu_Gaussian_v3_1  vs. FixedBidAdaptiveLimitPolicy
+        'exp_5200': experiment.exp_5200, # env setup 4, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidAdaptiveLimitPolicy
+        'exp_5201': experiment.exp_5201, # env setup 4, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidAdaptiveLimitPolicy
+        'exp_5300': experiment.exp_5300, # env setup 5, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidAdaptiveLimitPolicy
+        'exp_5301': experiment.exp_5301, # env setup 5, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidAdaptiveLimitPolicy
+        'exp_5400': experiment.exp_5400, # env setup 6, REINFORCE_Baseline_Gaussian_v3_1  vs. FixedBidAdaptiveLimitPolicy
+        'exp_5401': experiment.exp_5401, # env setup 6, REINFORCE_Baseline_Tabu_Gaussian_v3_1 vs. FixedBidAdaptiveLimitPolicy
     }
     try:
         exp_func = function_mappings[exp]

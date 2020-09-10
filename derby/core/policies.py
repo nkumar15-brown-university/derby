@@ -175,6 +175,71 @@ class FixedBidPolicy(AbstractPolicy):
         pass
 
 
+class FixedBidAdaptiveLimitPolicy(AbstractPolicy):
+    '''
+    Agent places fixed bid_per_item everyday, but adjusts its total limit
+    based on how many impressions it has already achieved w.r.t. its 
+    campaign's reach.
+    '''
+    def __init__(self, bid_per_item, auction_item_spec=None):
+        super().__init__()
+        self.bid_per_item = bid_per_item
+        self.auction_item_spec = auction_item_spec
+
+    def __repr__(self):
+        return "{}(bid_per_item: {}, auction_item_spec: {})".format(self.__class__.__name__, 
+                                                                self.bid_per_item, self.auction_item_spec)
+
+    def states_fold_type(self):
+        return AbstractEnvironment.FOLD_TYPE_SINGLE
+
+    def actions_fold_type(self):
+        return AbstractEnvironment.FOLD_TYPE_SINGLE
+
+    def rewards_fold_type(self):
+        return AbstractEnvironment.FOLD_TYPE_SINGLE
+
+    def call(self, states):
+        actions = []
+        for i in range(states.shape[0]):
+            actions_i = []
+            for j in range(states.shape[1]):
+                state_i_j = states[i][j]
+                if isinstance(state_i_j, CampaignBidderState):
+                    if (self.auction_item_spec is None):
+                        auction_item_spec = state_i_j.campaign.target
+                    else:
+                        auction_item_spec = self.auction_item_spec
+                    reach = state_i_j.campaign.reach
+                    impressions = state_i_j.impressions
+                    total_limit = (reach - impressions) * self.bid_per_item
+                    bid_per_item = min(self.bid_per_item, total_limit)
+                    action = [ Bid(self.agent, auction_item_spec, bid_per_item, total_limit) ]
+                else:
+                    if (self.auction_item_spec is None):
+                        spec_id = state_i_j[2]
+                    else:
+                        spec_id = self.auction_item_spec.uid
+                    reach = state_i_j[0]
+                    impressions = state_i_j[4]
+                    total_limit = (reach - impressions) * self.bid_per_item
+                    bid_per_item = min(self.bid_per_item, total_limit)
+                    action = [ [spec_id, bid_per_item, total_limit] ]
+                actions_i.append(action)
+            actions.append(actions_i)
+        actions = np.array(actions)
+        return actions
+
+    def choose_actions(self, call_output):
+        return call_output
+
+    def loss(self, states, actions, rewards):
+        return 0
+
+    def update(self, states, actions, rewards, policy_loss, tf_grad_tape=None):
+        pass
+
+
 class BudgetPerReachPolicy(AbstractPolicy):
 
     def __init__(self):
