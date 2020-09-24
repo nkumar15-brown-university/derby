@@ -116,40 +116,67 @@ class Experiment:
         graph agent1 on the same graph (i.e. fix the game and algo, then compare learning rates).        """
         return Experiment.equal_game_params(e1, e2) and \
         e1.experiment_config['experiment_number'] == e2.experiment_config['experiment_number']
+
+    @staticmethod
+    def equal_method_3(e1, e2):
+        """
+        For all files with the same exact setup,  
+        use this method to help graph agent1 and agent2 
+        (i.e. fix everything, then let plot_one_elem_of_partition take care of plotting both agents).
+        """
+        return Experiment.equal_game_params(e1, e2) and \
+        e1.experiment_config['learning_rate'] == e2.experiment_config['learning_rate'] and \
+        e1.experiment_config['experiment_number'] == e2.experiment_config['experiment_number']
     
+    @staticmethod
+    def get_plot_vals(agent, exp):
+        agent_policy_str = agent + '_policy'
+        agent_avg_str = 'avg_' + agent
+        agent_std_str = 'std_' + agent
+
+        if '_Uniform'.lower() in exp.experiment_config[agent_policy_str].lower():
+            print("Skipping agent {} in {} because it contains a uniform distr. policy.".format(agent, exp.experiment_config['experiment_csv']))
+            return None, None, None
+        x = [i for i in range(0, exp.experiment_config['num_epo'])]
+        y = exp.get_experiment_data()[agent_avg_str]
+        e = exp.get_experiment_data()[agent_std_str]
+
+        # Safety check: if data ends with FAILED, then specify that the policy failed.
+        # Perhaps we should do something better?
+        if (type(y[len(y)-1]) is str) and (y[len(y)-1].lower() == 'failed'):
+            y = y[:-1]
+            e = e[:-1]
+            y = [np.clip(float(item), -500, 500) for item in y]
+            e = [np.clip(float(item), -500, 500) for item in e]
+            exp.experiment_config[agent_policy_str] = exp.experiment_config[agent_policy_str] + " (FAILED)"
+        
+        # A safe fail here: if the data is incomplete, graph what is available.
+        # We could do something better here!
+        if len(y) != exp.experiment_config['num_epo']:
+            x = x[:len(y)]
+        # x = x[:1000]
+        # y = y[:1000]
+        # e = e[:1000]
+        return x, y, e
+
     @staticmethod
     def plot_one_elem_of_partition(output_folder, plot_var, 
                                     x_range_min, x_range_max, 
                                     y_range_min, y_range_max,
-                                    elem, title_set, filename_prefix):
+                                    elem, title_set, filename_prefix, 
+                                    plot_other_agents=False):
         for exp in elem:
-            if '_Uniform'.lower() in exp.experiment_config['agent_1_policy'].lower():
-                print("Skipping {} because it contains a uniform distr. policy.".format(exp.experiment_config['experiment_csv']))
-                continue
-            x = [i for i in range(0, exp.experiment_config['num_epo'])]
-            y = exp.get_experiment_data()['avg_agent_1']
-            e = exp.get_experiment_data()['std_agent_1']
-            # Safety check: if data ends with FAILED, then specify that the policy failed.
-            # Perhaps we should do something better?
-            if (type(y[len(y)-1]) is str) and (y[len(y)-1].lower() == 'failed'):
-                y = y[:-1]
-                e = e[:-1]
-                y = [np.clip(float(item), -500, 500) for item in y]
-                e = [np.clip(float(item), -500, 500) for item in e]
-                exp.experiment_config['agent_1_policy'] = exp.experiment_config['agent_1_policy'] + " (FAILED)"
-            # A safe fail here: if the data is incomplete, graph what is available.
-            # We could do something better here!
-            if len(y) != exp.experiment_config['num_epo']:
-                x = x[:len(y)]
-            
-            # x = x[:1000]
-            # y = y[:1000]
-            # e = e[:1000]
+            x1, y1, e1 = Experiment.get_plot_vals('agent_1', exp)
+            x2, y2, e2 = Experiment.get_plot_vals('agent_2', exp)
             try:
                 if not plot_var:
-                    e = None
-                plt.errorbar(x, y, e, linestyle='None', marker='.',
+                    e1 = None
+                    e2 = None
+                plt.errorbar(x1, y1, e1, linestyle='None', marker='.',
                             label=exp.experiment_config['agent_1_policy'])
+                if plot_other_agents:
+                    plt.errorbar(x2, y2, e2, linestyle='None', marker='^',
+                                label=exp.experiment_config['agent_2_policy'])
 
             except Exception as e:
                 print("Failed to plot {}".format(exp.experiment_config['experiment_csv']))
@@ -159,7 +186,7 @@ class Experiment:
         plt.title(', '.join([f"{x} : {e.experiment_config[x]} " for x in title_set]))
         plt.xlabel('epoch', fontsize=14)
         plt.ylabel('cumulative reward avg', fontsize=14)
-        plt.ylim([-25, 25])
+        # plt.ylim([-200, 50])
         plt.legend(loc='lower right')
         try:
             os.mkdir(output_folder)
@@ -187,9 +214,20 @@ def method_2(results_folder, output_folder, plot_var,
                                                 x_range_min, x_range_max, 
                                                 y_range_min, y_range_max,
                                                 elem, 
-                                                ['game_length', 'num_trajs', 'num_epo', 'learning_rate', 'experiment_number'], 
-                                                'learning_rates_comparison')
+                                                ['game_length', 'num_trajs', 'num_epo', 'experiment_number'], 
+                                                'learning_rates_comparison',)
 
+def method_3(results_folder, output_folder, plot_var,
+             x_range_min, x_range_max, y_range_min, y_range_max):
+    partition = Experiment.partition_experiments(Experiment.equal_method_3, results_folder)
+    for elem in partition:
+        Experiment.plot_one_elem_of_partition(output_folder, plot_var, 
+                                                x_range_min, x_range_max, 
+                                                y_range_min, y_range_max,
+                                                elem, 
+                                                ['game_length', 'num_trajs', 'num_epo', 'learning_rate', 'experiment_number'], 
+                                                'agents_comparison',
+                                                plot_other_agents=True)
 
 if __name__ == '__main__':
     method = sys.argv[1]
@@ -221,7 +259,8 @@ if __name__ == '__main__':
         y_range_max = None
     function_mappings = {
         'method_1': method_1,
-        'method_2': method_2
+        'method_2': method_2,
+        'method_3': method_3
     }
     try:
         func = function_mappings[method]

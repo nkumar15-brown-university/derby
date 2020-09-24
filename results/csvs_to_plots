@@ -14,7 +14,10 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
+mkdir -p "${output_dir}"
 echo "plotting method_1"
 python plot_results.py method_1 "${input_dir}" "${output_dir}" "${plot_var}"
 echo "plotting method_2"
 python plot_results.py method_2 "${input_dir}" "${output_dir}" "${plot_var}"
+echo "plotting method_3"
+python plot_results.py method_3 "${input_dir}" "${output_dir}" "${plot_var}"
