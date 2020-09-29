@@ -374,7 +374,8 @@ class MarketEnv(AbstractEnvironment):
 class OneCampaignNDaysEnv(MarketEnv):
 
     def __init__(self, auction: AbstractAuction, auction_item_spec_pmf: PMF, campaign_pmf: PMF,
-                 num_items_per_timestep_min: int, num_items_per_timestep_max: int, vectorize=True):
+                 num_items_per_timestep_min: int, num_items_per_timestep_max: int, vectorize=True,
+                 reward_func=None):
         super().__init__(vectorize)
         self._auction = auction
         self._campaign_pmf = campaign_pmf
@@ -382,6 +383,8 @@ class OneCampaignNDaysEnv(MarketEnv):
         self._num_items_per_timestep_range = (num_items_per_timestep_min, num_items_per_timestep_max)
         self._auction_item_spec_pmf = auction_item_spec_pmf
         self._auction_item_specs_by_id = { spec.uid : spec for spec in self._auction_item_spec_pmf.items() }
+        if reward_func is None:
+            self._reward_func = self.linear_reward_func
 
     def init(self, agents, horizon=1):
         super().init(agents, horizon=horizon)
@@ -432,8 +435,7 @@ class OneCampaignNDaysEnv(MarketEnv):
                 cbstate = self._market.get_bidder_state(agent)
                 states.append(cbstate)
                 agent_expenditure = ( cbstate.spend - pre_step_agent_spends[i] ) # alternatively, use agent_bids
-                # agent_reward = self.__reward_func_1__(cbstate, agent_expenditure, self.done)
-                agent_reward = self.__reward_func_2__(agent_bids)
+                agent_reward = self._reward_func(cbstate, agent_expenditure, agent_bids, self.done)
                 rewards.append(agent_reward)
 
         states = self.convert_to_states_tensor(states)
@@ -441,40 +443,60 @@ class OneCampaignNDaysEnv(MarketEnv):
         rewards = np.array(rewards)
         return states, rewards, self.done
 
-    def __reward_func_1__(self, cbstate, agent_expenditure, done):
+    def set_reward_func(self, reward_func):
+        self._reward_func = reward_func
+
+    @staticmethod
+    def linear_reward_func(cbstate, agent_expenditure, agent_bids, done):
         agent_reward = -1 * agent_expenditure # i.e. negative reward
         if done:
             agent_reward += min(cbstate.campaign.budget, 
                                 (cbstate.impressions / (1.0 * cbstate.campaign.reach)) * cbstate.campaign.budget)
         return agent_reward
 
-    def __reward_func_2__(self, agent_bids):
-        '''
-        list of line segments of the form:
-        [
-            [(x_0_0, y_0_0), (x_1_0, y_1_0)],
-            [(x_0_1, y_0_1), (x_1_1, y_1_1)],
-            ...
-            [(x_0_N, y_0_N), (x_1_N, y_1_N)],
-        ]
-        Where each row j represents the line segment to use as reward
-        for an action between x_0_j and x_1_j.
-        '''
-        line_segments = [
-            [(0, 5.5), (5, 5)],
-            [(5, 10), (1000, -1000)]
-        ]
-        action = agent_bids[0].bid_per_item
-        for seg in line_segments:
-            x0 = seg[0][0]
-            y0 = seg[0][1]
-            x1 = seg[1][0]
-            y1 = seg[1][1]
-            if (x0 <= action) and (action < x1):
+    @staticmethod
+    def sawtooth_reward_func(height_tooth1=10.0, midpoint=5.0, height_tooth2=10.0, maxpoint=10.0):
+        def sawtooth_reward_func_helper(cbstate, agent_expenditure, agent_bids, done):
+            # TODO: function is currently crude and only 1-dimensional (i.e. only allows for 1 sub-bid).
+            # Needs to be extended in a logical way to higher dimensions.
+            '''
+            list of line segments of the form:
+            [
+                [(x_0_0, y_0_0), (x_1_0, y_1_0)],
+                [(x_0_1, y_0_1), (x_1_1, y_1_1)],
+                ...
+                [(x_0_N, y_0_N), (x_1_N, y_1_N)],
+            ]
+            Where each row j represents the line segment to use as reward
+            for an action between x_0_j and x_1_j.
+            '''            
+            line_segments = [
+                [(0.0, height_tooth1), (midpoint, 0.0)],
+                [(midpoint, height_tooth2), (maxpoint, 0.0)]
+            ]
+            # TODO: Use other bids in agent's bid bundle.
+            action = agent_bids[0].bid_per_item
+            if action < 0:
+                return 0
+            if action > maxpoint:
+                x0 = midpoint
+                y0 = height_tooth2
+                x1 = maxpoint
+                y1 = 0.0
                 m = (y1 - y0) / (1.0 * (x1 - x0))
                 b = y1 - (m*x1)
                 return (m*action) + b
-        raise Exception("action {} didn't match any line segments!".format(action))
+            for seg in line_segments:
+                x0 = seg[0][0]
+                y0 = seg[0][1]
+                x1 = seg[1][0]
+                y1 = seg[1][1]
+                if (x0 <= action) and (action < x1):
+                    m = (y1 - y0) / (1.0 * (x1 - x0))
+                    b = y1 - (m*x1)
+                    return (m*action) + b
+
+        return sawtooth_reward_func_helper
 
     def get_states_samples(self, num_of_samples=1):
         '''
