@@ -432,17 +432,49 @@ class OneCampaignNDaysEnv(MarketEnv):
                 cbstate = self._market.get_bidder_state(agent)
                 states.append(cbstate)
                 agent_expenditure = ( cbstate.spend - pre_step_agent_spends[i] ) # alternatively, use agent_bids
-                agent_reward = -1 * agent_expenditure # i.e. negative reward
-                if self.done:
-                    # TODO: replace with actual formula
-                    agent_reward += min(cbstate.campaign.budget, 
-                                        (cbstate.impressions / (1.0 * cbstate.campaign.reach)) * cbstate.campaign.budget)
+                # agent_reward = self.__reward_func_1__(cbstate, agent_expenditure, self.done)
+                agent_reward = self.__reward_func_2__(agent_bids)
                 rewards.append(agent_reward)
 
         states = self.convert_to_states_tensor(states)
         # numpy array of shape [m, ]
         rewards = np.array(rewards)
         return states, rewards, self.done
+
+    def __reward_func_1__(self, cbstate, agent_expenditure, done):
+        agent_reward = -1 * agent_expenditure # i.e. negative reward
+        if done:
+            agent_reward += min(cbstate.campaign.budget, 
+                                (cbstate.impressions / (1.0 * cbstate.campaign.reach)) * cbstate.campaign.budget)
+        return agent_reward
+
+    def __reward_func_2__(self, agent_bids):
+        '''
+        list of line segments of the form:
+        [
+            [(x_0_0, y_0_0), (x_1_0, y_1_0)],
+            [(x_0_1, y_0_1), (x_1_1, y_1_1)],
+            ...
+            [(x_0_N, y_0_N), (x_1_N, y_1_N)],
+        ]
+        Where each row j represents the line segment to use as reward
+        for an action between x_0_j and x_1_j.
+        '''
+        line_segments = [
+            [(0, 5.5), (5, 5)],
+            [(5, 10), (1000, -1000)]
+        ]
+        action = agent_bids[0].bid_per_item
+        for seg in line_segments:
+            x0 = seg[0][0]
+            y0 = seg[0][1]
+            x1 = seg[1][0]
+            y1 = seg[1][1]
+            if (x0 <= action) and (action < x1):
+                m = (y1 - y0) / (1.0 * (x1 - x0))
+                b = y1 - (m*x1)
+                return (m*action) + b
+        raise Exception("action {} didn't match any line segments!".format(action))
 
     def get_states_samples(self, num_of_samples=1):
         '''
